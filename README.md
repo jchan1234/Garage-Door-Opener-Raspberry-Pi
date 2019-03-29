@@ -1,56 +1,95 @@
 # Garage Door Opener for Raspberry Pi
 
-This is sample code to open/close your garage door using a Raspberry Pi, a sainsmart relay (https://www.amazon.ca/SainSmart-2-Channel-Arduino-Raspberry-Electronic/dp/B0057OC6D8/ref=sr_1_3?ie=UTF8&qid=1506869627&sr=8-3&keywords=sainsmart+relay), and a couple of Normally Open (NO) reed switch. Note. I did try some other relay before and it did not work. That is why I am pushing for the SainSmart relay.
-This code, will allow you to open/close your garage door from anywhere in the world, see the status of your garage door to see if it is open/close. It will also log, the open/closure time of the garage door and send you email or text message if you left the garage door open too long. It is currently set-up to send email/text if it is open for more than 5 mins for first alert and more than 5 hours for second alert. Also, if it sent and alert, it will also alert when the door is closed.
+This is for a remote garage door opener using a raspberry pi, a 2 channel relay, and a couple of NO (Normally Open) switch.
 
-This sample code is using GPIO pin 7 for the magnetic sensor to read if the left door is open/close, gpio 17 to send the signal to the relay to open/close the left door. It is using pin 8 for the sensor for right door and pin 18 for the relay for the right door.
+Here is the link for SainSmart 2 Channel Relay. I tried some other relay but did not work well with the pi.
+https://www.amazon.ca/SainSmart-2-Channel-Arduino-Raspberry-Electronic/dp/B0057OC6D8/ref=sr_1_2?keywords=sainsmart+2+channel+relay&qid=1553876623&s=gateway&sr=8-2
 
-For this to work, we have garage2.html which is the code to show you the status of the door, give you the button to open/close the door, show you a log of when the door was closed/opened. We have myscript.py is the code that monitor the garage door, log when it was opened/closed, send alerts if it is opened too long. garage2.html is really the client and myscript.py is acting as a server code. garage2.html will be calling code from myscript.py to get log information. myscript.py will be calling l_logger.sh and r_logger.sh to write log when door is open/close. It will also called mail.py to send mail or text. It is sending text using email to SMS services.
+Link for 2 NO switch. You can use any NO switch
+https://www.amazon.ca/uxcell%C2%AE-uxcell3Sets-Magnetic-Normally-Security/dp/B07F5ZDLDR/ref=sr_1_5?crid=3F08GJP32J9WJ&keywords=normally%2Bopen%2Bmagnetic%2Bswitch&qid=1553876734&s=gateway&sprefix=Normally%2BOpen%2Caps%2C241&sr=8-5&th=1
 
-To use this, follow this instruction
+This will allow you to open/close 2 garage doors, log open and close time and email me if door is left open for more than 5 mins and more than 5 hours. Also, if it alerted me, it will also alert me when it is closed. Also show the last 10 lines of the log on the page.
+Uses WebIOPI.
 
-. Use Putty to connect to your raspberry pi. You can download putty @ http://www.putty.org/
+GPIO Configuration
+------------------
+1 (3.3V) - Connect to the Right NO switch. Send some power to the switch. (2 cables)
+2 (5.0V) - Sainsmart Power VOC (This will provide power to the relay switch)
+6 (Gnd)  - Connect to the Right NO switch.
+9 (Gnd)  - Sainsmart GND (Ground)
+11(GPIO17) - Sainsmart IN2 (Switch for Left Door to send open/close signal)
+12(GPIO18) - Sainsmart IN1 (switch for Right Door to send open/close signal)
+17 (3.3V) - Connect to Left NO switch. Send some power to the switch. (2 cables)
+24(GPIO8) - Connect to the right NO switch.(2 cables)
+26(GPIO7) - Connect to the left NO switch.(2 cables)
+39(gnd)   - Connect to left NO switch
 
-. You normally sign in using id 'pi' and your password. If you did not change the password, the default password is 'raspberry'.
+Connection from relay to garage door opener
+-------------------------------------------
+Most garage door opener will have a simple push button to open and close. You can find out where the cable from those button connect to. You can connect 2 new wires there and when both wires are connected for a short period, it should send the signal to open/close the door. You need to connect 1 cable to K1 or K2 and the other one to the connection below.
+e.g
+-|
+/
+k1---> To garage door opener 
+-|---> To garage door opener
 
-. Use this command sudo nano /etc/webiopi/config That will bring up the nano editor to change the config file.
+How to prepare cable (2 cables) for NO switch
+---------------------------------------------
+You need a 10kOhm and a 1kOhm resistor to prepare a 2 cables connector.
+Example. Using 1 (3.3v) and 24 (GPIO 8) for 2 cables 
+         Using 6(Gnd) for the second cable 
 
-. The main thing to edit is my script need to be uncommented for it to run. You need to point to where the file is. e.g myscript = /usr/share/webiopi/htdocs/myscript.py. To exit, press CTRL-X.
+3.3 V -> 10kOhm resistor------->|
+                                |----->|
+GPIO Input -> 1lOhm resistor -->|      | NO Switch
+                                       |
+Gnd ---------------------------------->|
 
-. Another option is to copy the config file here to /etc/webiopi using sudo mv ./config /etc/webiopi/config
+The way, the NO switch works is that when the garage is close, the power will go to the ground.
+When it is open, the power will go to the GPIO. The resistor are there to cut back the electricity so that it does not burn the pi.
 
-. In myscript.py, I am using GPIO 7, 8 to read if the door is open or close, you would need to adjust if needed.
+Code description
+----------------
+garage2.html and myscript.py are the main programs.
 
-. You can use 'sudo nano /usr/share/webiopi/htdocs/myscript.py' to edit it and adjust the line LEFT_DOOR and RIGHT_DOOR if needed.
+garage2.html build and display the page. It also give you the button to open/close the door and any other UI interface on the web page. It is the front-end portion. Written in Javascript.
 
-. Note: If you are using different GPIO pin, you need to adjust garage2.html as well. The code is reading pin 7, and 8 for the sensor and is using pin 17, 18 which is connected to the relay to open/close the door.
+myscript.py monitors the garage status and log open and close time to a file. Also send alert when door is left open too long. It is the back-end portion. Written in python.
 
-. You should make sure that the code are executable by everyone using these commands
+l_logger.sh logs open and close time to l_garage.log. 
+r_logger.sh logs open and close time to r_garage.log
+mail.py sends email when door is left open too long.
 
-sudo chmod 775 /usr/share/webiopi/htdocs/myscript.py
+Those 3 scripts above are called by myscript.py
 
-sudo chmod 775 /usr/share/webiopi/htdocs/r_logger.sh
+Change the attribute of install.sh and run it using sudo. Below are the commands
+chmod 775 install.sh
+sudo ./install.sh
 
-sudo chmod 775 /usr/share/webiopi/htdocs/l_logger.sh
+What does install.sh do?
+------------------------
+. Download webiopi
+. Download webiopi patch to work for newer pi like pi2 and above
+. Install webiopi
+. Change attribute of /usr/share/webiopi/htdocs to be owned by pi instead of root
+. Change attribute of Garage pi code to be able and copy to /usr/share/webiopi/htdocs
+. Copy new webiopi config to /etc/webiopi/config
+. Get webiopi to startup automatically on reboot
 
-sudo chmod 775 /usr/share/webiopi/htdocs/mail.py
+To reboot pi, issue this command
+sudo reboot
 
-. You shoud create your log files and make them writable using these commands
+To set-up a password for the site, follow instruction here
+http://webiopi.trouch.com/PASSWORD.html
 
-sudo touch /usr/share/webiopi/htdocs/l_garage.log
+To access the site, go to http://<ip address of pi>:8000
 
-sudo touch /usr/share/webiopi/htdocs/r_garage.log
+If you want to install webiopi and the patch, look here.
+https://github.com/doublebind/raspi
 
-sudo chmod 666 /usr/share/webiopi/htdocs/l_garage.log
+For more information on webiopi, look here
+http://webiopi.trouch.com/
 
-sudo chmod 666 /usr/share/webiopi/htdocs/r_garage.log
+Original code comes from https://www.driscocity.com/idiots-guide-to-a-raspberry-pi-garage-door-opener/
 
-. You should edit mail.py using sudo nano /usr/share/webiopi/htdocs/mail.py to put your email address or email to SMS address. You need to modify the to_addr_list, your login, and password.
-
-. If you get and error for your email, you will need to ask gmail to allow to send from less secure. Follow instruction from the mail you will get from gmail. You can also just test the email using 
-
-sudo /usr/share/webiopi/htdocs/mail.py test
-
-. If you want to change the timing of the alert, you can edit ALERT1 and ALERT2 in myscript.py. Note each second is about 1.25. For example, if you want 60 seconds, you enter 75. That number may differ depending on which pi, you have. This is tested on a PI 3
-
-Hope that you can get it to work.
+You can get instruction on how to configure and connect the hardware (PI, RELAY, SWITCH) and other software (RASPIAN, WEBIOPI) needed there.
