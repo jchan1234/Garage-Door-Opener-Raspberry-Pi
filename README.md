@@ -8,7 +8,8 @@ https://www.amazon.ca/SainSmart-2-Channel-Arduino-Raspberry-Electronic/dp/B0057O
 Link for 2 NO switch. You can use any NO switch
 https://www.amazon.ca/uxcell%C2%AE-uxcell3Sets-Magnetic-Normally-Security/dp/B07F5ZDLDR/ref=sr_1_5?crid=3F08GJP32J9WJ&keywords=normally%2Bopen%2Bmagnetic%2Bswitch&qid=1553876734&s=gateway&sprefix=Normally%2BOpen%2Caps%2C241&sr=8-5&th=1
 
-This will allow you to open/close 2 garage doors, log open and close time and email me if door is left open for more than 5 mins and more than 5 hours. Also, if it alerted me, it will also alert me when it is closed. Also show the last 10 lines of the log on the page.
+This will allow you to open/close 2 garage doors, log open and close time and email you if door is left open for more than 5 mins and more than 5 hours. Also, if it alerted you, it will also alert you when it is closed. Also show the last 10 lines of the log on the page. A picture and a 30 seconds video is taken each time the door is open or when 'Take picture' button is pushed. You will be able to navigate the last 20 pictures/video taken and delete any of them. The pictures will be on /usr/share/webiopi/htdocs/po folder and video will be on /usr/share/webiopi/htdocs/vo. The log files are on /usr/share/webiopi/htdocs/l_garage.log and r_garage.log.
+
 Uses WebIOPI.
 
 GPIO Configuration
@@ -71,8 +72,10 @@ What does install.sh do?
 . Download webiopi
 . Download webiopi patch to work for newer pi like pi2 and above
 . Install webiopi
+. Install ffmpeg
 . Change attribute of /usr/share/webiopi/htdocs to be owned by pi instead of root
 . Change attribute of Garage pi code to be able and copy to /usr/share/webiopi/htdocs
+. Create po and vo folder for the picture and video history.
 . Copy new webiopi config to /etc/webiopi/config
 . Get webiopi to startup automatically on reboot
 
@@ -89,6 +92,9 @@ https://github.com/doublebind/raspi
 
 For more information on webiopi, look here
 http://webiopi.trouch.com/
+
+If you want to use this over the internet look into remote.it https://remote.it/
+There are ios and android app as well.
 
 Original code comes from https://www.driscocity.com/idiots-guide-to-a-raspberry-pi-garage-door-opener/
 

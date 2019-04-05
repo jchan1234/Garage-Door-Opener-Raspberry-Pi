@@ -3,206 +3,342 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 <meta name="viewport" content="height = device-height, width = device-width, user-scalable = no"/>
+<link rel='stylesheet' href='https://use.fontawesome.com/releases/v5.7.0/css/all.css' integrity='sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ' crossorigin='anonymous'>
 <title>Garage Door Opener</title>
 <script type="text/javascript" src="/webiopi.js"></script>
 <script type="text/javascript">
         webiopi().ready(function() {
-                var contentl, contentl2, buttonl;
-                contentl = $("#contentl");
-		contentl2 = $("#openCloseButtonl");
+		    var pic_l=[];
+			var cur_pic=-1;
+			var tot_pic=-1;
+			
+			var lGarageButton, lGarageStatus, buttonl;
+			lGarageButton = $("#lGarageButton");
+			lGarageStatus = $("#openCloseButtonl");
 
-		var contentr, contentr2, buttonr;
-                contentr = $("#contentr");
-		contentr2 = $("#openCloseButtonr");
-		var l_garage_op='', r_garage_op='';
-                var l_garage_log=[], r_garage_log=[];
-                var l_garage_cnt=0, r_garage_cnt=0;
-                var max_cnt=10;
+			var rGarageButton, rGarageStatus, buttonr;
+			rGarageButton = $("#rGarageButton");
+			rGarageStatus = $("#openCloseButtonr");
 
-		$(checkStatus);
+			var l_garage_log=[], r_garage_log=[];
 
-		webiopi().setFunction(17,"in");  //Left garage door button
-		webiopi().setFunction(7,"in"); //left garage door sensor
-		webiopi().setFunction(18,"in");  //right garage door button
-		webiopi().setFunction(8,"in"); //right garage door sensor
-     
-	        // create an "OPEN" labeled button for GPIO
-                buttonl = webiopi().createGPIOButton(7, "");
-                contentl2.append(buttonl); // append button to content div
+			var takepicture,picture;
+			takepicture = $("#takepicture");
 
-                // create button that calls the mousedown function below
-                buttonl = webiopi().createButton("button", "LEFT GARAGE DOOR", showConfirml );
-                contentl.append(buttonl); // append button to content div
+			var refresh,refLog;
+			refLog = $("#refLog");
 
-		// create an "OPEN" labeled button for GPIO
-                buttonr = webiopi().createGPIOButton(8, "");
-                contentr2.append(buttonr); // append button to content div
+			webiopi().setFunction(17,"in");  //Left garage door button
+			webiopi().setFunction(7,"in"); //left garage door sensor
+			webiopi().setFunction(18,"in");  //right garage door button
+			webiopi().setFunction(8,"in"); //right garage door sensor
 
-                // create button that calls the mousedown function below
-                buttonr = webiopi().createButton("button", "RIGHT GARAGE DOOR", showConfirmr );
-                contentr.append(buttonr); // append button to content div
+			// create garage status button for GPIO
+			buttonl = webiopi().createGPIOButton(7, "");
+			lGarageStatus.append(buttonl); // append button to content div
 
-		hideConfirml();
-            	hideConfirmr();
+			// create button to open or close door
+			buttonl = webiopi().createButton("button", "LEFT GARAGE DOOR", showConfirml );
+			lGarageButton.append(buttonl); // append button to content div
+
+			// create button that takes a picture
+			picture = webiopi().createButton("picture", "Take Picture", takePic );
+			takepicture.append(picture); // append button to takepicture div
+
+			// creates a button that refreshes the log
+			refresh = webiopi().createButton("picture", "Show Picture", refreshLog );
+			refLog.append(refresh); // append button to refLog div
+
+			// create garage status button for GPIO
+			buttonr = webiopi().createGPIOButton(8, "");
+			rGarageStatus.append(buttonr); // append button to content div
+
+			// create button that calls the mousedown function below
+			buttonr = webiopi().createButton("button", "RIGHT GARAGE DOOR", showConfirmr );
+			rGarageButton.append(buttonr); // append button to content div
+
+			var update_l_log = function l_log_info(macro,args,data){
+				l_garage_log = data.split('++');
+				l_garage_cnt = l_garage_log.length;
+				if(l_garage_cnt > 0){
+					str1=l_garage_log[0].split(' ');
+					l_garage_log[0]=str1[0].substr(0,16)+' '+str1[1];
+				}
+				var cnt=1;
+				while(cnt < l_garage_log.length-1){
+					str1=l_garage_log[cnt].split(' ');
+					l_garage_log[cnt]=str1[0].substr(0,17)+' '+str1[1];
+					cnt++;
+				}
+				var res=build_log(l_garage_log,l_garage_cnt-1);
+				document.getElementById('logl').innerHTML = res;
+			}
+
+			webiopi().callMacro('l_log_read',' ',update_l_log);
+
+			var update_r_log = function r_log_info(macro,args,data){
+				r_garage_log = data.split('++');
+				r_garage_cnt = r_garage_log.length;
+				if(r_garage_cnt > 0){
+					str1=r_garage_log[0].split(' ');
+					r_garage_log[0]=str1[0].substr(0,16)+' '+str1[1];
+				}
+				var cnt=1;
+				while(cnt < r_garage_log.length-1){
+					str1=r_garage_log[cnt].split(' ');
+					r_garage_log[cnt]=str1[0].substr(0,17)+' '+str1[1];
+					cnt++;
+				}
+				var res=build_log(r_garage_log,r_garage_cnt-1);
+				document.getElementById('logr').innerHTML = res;
+			}
+
+			webiopi().callMacro('r_log_read',' ',update_r_log);
+			
+			var read_pic_list = function r_pic_list(macro,args,data){
+			    pic_l = data.split(" ");
+				tot_pic = pic_l.length-1;
+			}
+
+			webiopi().callMacro('pic_list',' ',read_pic_list);
+			document.getElementById("prev_pic").onclick = function() {prev_picture()};
+			document.getElementById("next_pic").onclick = function() {next_picture()};
+			document.getElementById("trash").onclick = function() {del_pic()};
+			document.getElementById("videoOn").onclick = function() {show_video()};
+
+			$(checkStatus);
+
+			function checkStatus() {
+				if ($('#gpio7').hasClass('LOW')){
+					$("#gpio7").html('CLOSED');
+				}else {
+					$("#gpio7").html('OPEN');
+				}
+				if ($('#gpio8').hasClass('LOW')){
+					$("#gpio8").html('CLOSED');
+				}else {
+					$("#gpio8").html('OPEN');
+				}
+				setTimeout(checkStatus,1000)
+			}		
+			function build_log(g_log,g_cnt) {
+			// Build garage log html table
+				var res='<table align=center>';
+				var cnt=0;
+				while(cnt < g_cnt){
+					res+='<tr><td>'+g_log[cnt]+'</td></tr>';
+					cnt++
+				}
+				res+='<table>';
+				return res;
+			}
+
+			function mouseupl() {
+			// this function gets called by the mousedown function below - it sets gpio7 back to 'IN'
+				webiopi().setFunction(17,"in");
+				setTimeout(updatelLog,15000);
+			}
+			function updatelLog(){
+				webiopi().callMacro('l_log_read',' ',update_l_log);
+			}
+			function mousedownl() {
+			// this function sets gpio7 to 'OUT' which will trip the relay.  After .5 second it calls mouseup above.
+			// hides the confirmation div and makes doge face change
+				webiopi().setFunction(17,"out");
+				document.getElementById('yesl').style.display = "none";
+				document.getElementById('nol').style.display = "none"
+				document.getElementById('confirmTextl').style.display = "none";
+				setTimeout(mouseupl, 500);
+			}
 		
-		var update_l_log = function l_log_info(macro,args,data){
-                 	l_garage_log = data.split('++');
-                 	l_garage_cnt = l_garage_log.length;
-                        if(l_garage_cnt > 0){
-                        	str1=l_garage_log[0].split(' ');
-                       		l_garage_log[0]=str1[0].substr(0,16)+' '+str1[1];
-         		}
-			var cnt=1;
-	                while(cnt < l_garage_log.length-1){
-                          	str1=l_garage_log[cnt].split(' ');
-                          	l_garage_log[cnt]=str1[0].substr(0,17)+' '+str1[1];
-           			cnt++;
-                    	}
-			var res=build_log(l_garage_log,l_garage_cnt-1);
-                  	document.getElementById('logl').innerHTML = res
-                }
-
-                webiopi().callMacro('l_log_read',' ',update_l_log);
-
-		var update_r_log = function r_log_info(macro,args,data){
-                 	r_garage_log = data.split('++');
-                 	r_garage_cnt = r_garage_log.length;
-			if(r_garage_cnt > 0){
-                        	str1=r_garage_log[0].split(' ');
-                       		r_garage_log[0]=str1[0].substr(0,16)+' '+str1[1];
+			function hideConfirml() {
+			// after pressing no hide the confirmation div
+				document.getElementById('yesl').style.display = "none";
+				document.getElementById('nol').style.display = "none";
+				document.getElementById('confirmTextl').style.display = "none";
+				document.getElementById("lGarageButton").enabled = true;
 			}
-			var cnt=1;
-	                while(cnt < r_garage_log.length-1){
-                          	str1=r_garage_log[cnt].split(' ');
-                          	r_garage_log[cnt]=str1[0].substr(0,17)+' '+str1[1];
-           			cnt++;
-                    	}
-			var res=build_log(r_garage_log,r_garage_cnt-1);
-                  	document.getElementById('logr').innerHTML = res
-                }
 
-                webiopi().callMacro('r_log_read',' ',update_r_log);
-
-		function checkStatus() {
-			if ($('#gpio7').hasClass('LOW')){
-				$("#gpio7").html('CLOSED');       
-			}else {
-				$("#gpio7").html('OPEN');
+			function showConfirml() {
+			// show confirmation div after pressing garage door button
+				document.getElementById("lGarageButton").disabled = true;
+				document.getElementById('yesl').onclick = mousedownl;
+				document.getElementById('nol').onclick = hideConfirml;
+				document.getElementById('yesl').style.display = "block";
+				document.getElementById('nol').style.display = "block";
+				document.getElementById('confirmTextl').style.display = "block";
 			}
-			if ($('#gpio8').hasClass('LOW')){
-				$("#gpio8").html('CLOSED');
-			}else {
-				$("#gpio8").html('OPEN');
+		
+			function mouseupr() {
+			// this function gets called by the mousedown function below - it sets gpio8 back to 'IN'
+				webiopi().setFunction(18,"in");
+				setTimeout(updaterLog,15000);
 			}
-			setTimeout(checkStatus,1000)
+			
+			function updaterLog(){
+				webiopi().callMacro('r_log_read',' ',update_r_log);
+			}
+		
+			function mousedownr() {
+			// this function sets gpio8 to 'OUT' which will trip the relay.  After .5 second it calls mouseup above.
+			// hides the confirmation div and makes doge face change
+				webiopi().setFunction(18,"out");
+				document.getElementById('yesr').style.display = "none";
+				document.getElementById('nor').style.display = "none";
+				document.getElementById('confirmTextr').style.display = "none";
+				setTimeout(mouseupr, 500);
+			}
+
+			function hideConfirmr() {
+			// after pressing no hide the confirmation div
+				document.getElementById('yesr').style.display = "none";
+				document.getElementById('nor').style.display = "none";
+				document.getElementById('confirmTextr').style.display = "none";
+			}
+
+			function showConfirmr() {
+			// show confirmation div after pressing garage door button
+				document.getElementById('yesr').onclick = mousedownr;
+				document.getElementById('nor').onclick = hideConfirmr;
+				document.getElementById('yesr').style.display = "block";
+				document.getElementById('nor').style.display = "block";
+				document.getElementById('confirmTextr').style.display = "block";
+			}
+
+			function refreshLog(){
+				document.getElementById("refLog").style.visibility = "hidden";
+				webiopi().callMacro('r_log_read',' ',update_r_log);
+				webiopi().callMacro('l_log_read',' ',update_l_log);
+				webiopi().callMacro('pic_list',' ',read_pic_list);
+				document.getElementById("refLog").style.visibility = "visible";
+				updatePic2();
+			}
+			
+			function set_pic_buttons() {
+				var b=document.getElementById('pic_container');
+				b.hidden=false;
+				b=document.getElementById('prev_pic');
+				if (cur_pic==0) {
+					b.hidden=true;
+				}
+				else {
+					b.hidden=false;
+				}
+				b=document.getElementById('next_pic');
+				if (cur_pic == tot_pic) {
+					b.hidden=true;
+				}
+				else {
+					b.hidden=false;
+				}
+				b=document.getElementById('vidOn');
+				b.hidden=false;
+			}
+			function show_video(type){
+				var checkBox = document.getElementById("videoOn");
+				if (checkBox.checked == true){
+				    if (pic_l[cur_pic]!='deleted') {
+						var res2="<video width='320' height='240' controls> <source src='vo/v"+pic_l[cur_pic]+".mp4' type='video\/mp4'> <\/video>";
+					}
+					else {
+						var res2="<img id=cam src='DeletedPic.png' width='320' height='240'>";
+					}
+					var x = document.getElementById('video_div');
+					x.innerHTML = res2;
+					x.hidden=false;
+				}
+				else {
+					var res2="";
+					var x = document.getElementById('video_div');
+					x.innerHTML = res2;
+					x.hidden=true;
+				}
+			}
+			
+			function show_deleted_pic() {
+				var res="<img id=cam src='DeletedPic.png' width='320' height='240'>";
+				var a=document.getElementById('picture_div');
+				if (a!= null) {
+				  a.innerHTML = res;
+				}
+				show_video();
+				var b=document.getElementById('date');
+				b.hidden=false;
+				b.innerHTML='';
+				set_pic_buttons()
+				b=document.getElementById('trash');
+				b.hidden=true;
+			}
+			
+			var deleted_pic = function deleted_pic(macro,args,data){
+				show_deleted_pic();
+				pic_l[cur_pic]='deleted';
+			}
+			
+			function del_pic() {
+				webiopi().callMacro('del_pic',pic_l[cur_pic],deleted_pic);
+			}
+
+			function takePic(){
+			    alert('Will take a picture and a 30secs video. Please be patient.');
+				a=document.getElementById("takepicture");
+				a.hidden=true;
+				webiopi().callMacro('takePic',' ',updatePic);
+				webiopi().callMacro('pic_list',' ',read_pic_list);
+			}
+
+			var updatePic = function (macro,args,data){
+				setTimeout(updatePic2,50);
+				a=document.getElementById("takepicture");
+				a.hidden=false;
+			}
+
+			function updatePic2(){
+			    cur_pic=tot_pic;
+				show_regular_pic();
+			}
+			
+			function show_regular_pic() {
+				var res="<img id=cam src='po/p"+pic_l[cur_pic]+".jpg'>";
+				var a=document.getElementById('picture_div');
+				if (a!= null) {
+				  a.innerHTML = res;
+				}
+				show_video();
+				b=document.getElementById('date');
+				b.hidden=false;
+				b.innerHTML=pic_l[cur_pic];
+				set_pic_buttons();
+				var b=document.getElementById('trash');
+				b.hidden=false;
+			}
+			
+			function next_picture(){
+				cur_pic = cur_pic + 1;
+				if(pic_l[cur_pic]=='deleted') {
+				  show_deleted_pic()
+				}
+				else {
+				  show_regular_pic()
+				}
+			}
+			
+			function prev_picture(){
+				cur_pic = cur_pic - 1;
+				if(pic_l[cur_pic]=='deleted') {
+				  show_deleted_pic()
+				}
+				else {
+				  show_regular_pic()
+				}
+			}
+
+			webiopi().refreshGPIO(true);
 		}
-        
-	        // add new data on top of array
-		function push_log(g_log,g_cnt,data){
-                  var cnt=g_cnt;
-                  while(cnt!=0){
-                    if(cnt<=max_cnt){
-                      g_log[cnt]=g_log[cnt-1];
-                    }
-                    cnt--;
-                  }
-                  g_log[0]=data;
-		  var new_cnt=max_cnt+1;
-                  if(g_cnt <= max_cnt){
-                    new_cnt=g_cnt+1;
-                  }
-                  return new_cnt;
-                }
-         
-		// Build garage log
-	       function build_log(g_log,g_cnt) {
-                  var res='<table align=center>';
-                  var cnt=0;
-                  while(cnt < g_cnt){
-                    res+='<tr><td>'+g_log[cnt]+'</td></tr>';
-                    cnt++
-                  }
-                  res+='<table>';
-                  return res;
-                }
-                
-		// this function gets called by the mousedown function below - it sets gpio7 back to 'IN'
-		function mouseupl() {
-			webiopi().setFunction(17,"in");
-			//document.getElementById('buttonl').disable = "false";
-		}
+	);
 
-		// this function sets gpio7 to 'OUT' which will trip the relay.  After .5 second it calls mouseup above.
-		// hides the confirmation div and makes doge face change
-		function mousedownl() {
-			webiopi().setFunction(17,"out");
-			//window.alert("RELAY CLOSED");
-			document.getElementById('yesl').style.visibility = "hidden";
-			document.getElementById('nol').style.visibility = "hidden"
-			document.getElementById('confirmTextl').style.visibility = "hidden";
-			setTimeout(mouseupl, 500);
-		}
-
-		// after pressing no hide the confirmation div
-		function hideConfirml() {
-			//document.getElementById('buttonl').disable = "false";
-			document.getElementById('yesl').style.visibility = "hidden";
-			document.getElementById('nol').style.visibility = "hidden";
-			document.getElementById('confirmTextl').style.visibility = "hidden";
-		}
-
-		// show confirmation div after pressing garage door button
-		function showConfirml() {
-			//document.getElementById('buttonl').disabled="true";
-			document.getElementById('yesl').onclick = mousedownl;
-			document.getElementById('nol').onclick = hideConfirml;
-			document.getElementById('yesl').style.visibility = "visible";
-			document.getElementById('nol').style.visibility = "visible";
-			document.getElementById('confirmTextl').style.visibility = "visible";
-		}
-
-		// this function gets called by the mousedown function below - it sets gpio8 back to 'IN'
-		function mouseupr() {
-			webiopi().setFunction(18,"in");
-		}
-
-		// this function sets gpio8 to 'OUT' which will trip the relay.  After .5 second it calls mouseup above.
-		// hides the confirmation div and makes doge face change
-		function mousedownr() {
-			//document.getElementById('buttonr').disabled="false";
-			webiopi().setFunction(18,"out");
-			//window.alert("RELAY CLOSED");
-			document.getElementById('yesr').style.visibility = "hidden";
-			document.getElementById('nor').style.visibility = "hidden";
-			document.getElementById('confirmTextr').style.visibility = "hidden";
-			setTimeout(mouseupr, 500);
-		}
-
-		// after pressing no hide the confirmation div
-		function hideConfirmr() {
-			//document.getElementById('buttonr').disable = "false";
-			document.getElementById('yesr').style.visibility = "hidden";
-			document.getElementById('nor').style.visibility = "hidden";
-			document.getElementById('confirmTextr').style.visibility = "hidden";
-		}
-
-		// show confirmation div after pressing garage door button
-		function showConfirmr() {
-			//document.getElementById('buttonr').disabled="true";
-			document.getElementById('yesr').onclick = mousedownr;
-			document.getElementById('nor').onclick = hideConfirmr;
-			document.getElementById('yesr').style.visibility = "visible";
-			document.getElementById('nor').style.visibility = "visible";
-			document.getElementById('confirmTextr').style.visibility = "visible";
-		}
-
-
-        // constantly refresh status to see if door is open or closed
-		webiopi().refreshGPIO(true)
-	});
-
-        </script>
-        <style type="text/css">
+</script>
+    <style type="text/css">
 
 		body {
 			font-family: Arial, Helvetica, Sans-Serif;
@@ -212,7 +348,7 @@
 		}
 		#content {
 			width: 150px;
-			height: 150px;
+			height: 120px;
 		}
 	        button {
 			display: block;
@@ -220,16 +356,29 @@
 			margin-left: auto;
 			margin-right: auto;
 			padding: 0px;
-			width: 150px;
+			width: 120px;
 			height: 50px;
 			font-size: 12pt;
 			font-weight: bold;
 			color: black;
 			border-radius: 10px !important;
-        	}	
+        	}
+		picture {
+			display: block;
+			margin: 10px 10px;
+			margin-left: auto;
+			margin-right: auto;
+			padding: 0px;
+			width: 120px;
+			height: 20px;
+			font-size: 12pt;
+			font-weight: bold;
+			color: black;
+			border-radius: 10px !important;
+        	}
 		button#button {
-			height: 150px !important;
-			background: #808080 url('doge-static.png') no-repeat center bottom;
+			height: 120px !important;
+			background: #808080 center bottom;
 			border-radius: 10px !important;
 			cursor: pointer !important;
 		}
@@ -246,22 +395,18 @@
 			color: #FFFFFF !important;
 		}
 		#header {
-
 			margin-left: auto;
 			margin-right: auto;
 			margin-top: 0px !important;
 			padding-top: 0px !important;
-
 		}
 		#confirmText {
-
 			margin-left: auto;
 			margin-right: auto;
 			padding: 0px;
 			margin-top: 0px;
 			visibility: hidden;
 			width: 300px;
-
 		}
 		#log {
 			text-align: center;
@@ -284,47 +429,93 @@
 		}
 		#yesl {
 			background-color: green;
+			width: 120px;
 			float: center;
 		}
 		#nol {
 			background-color: red;
+			width: 120px;
 			float: center;
 		}
 		#yesr {
 			background-color: green;
+			width: 120px;
 			float: center;
 		}
 		#nor {
 			background-color: red;
+			width: 120px;
 			float: center;
 		}
 		.confirmButton {
 			border: 3px solid #000000;
 			border-radius: 10px;
 			cursor: pointer;
-			height: 50px;
+			height: 30px;
 			width: 150px;
-			font-size: 12pt;
+			font-size: 10pt;
             		font-weight: bold;
 			text-align: center;
-			line-height: 50px;
+			line-height: 30px;
 		}
 		#openCloseButton {
 			width: 150px;
 			height: 60px;
 		}
+		img {
+			display: block;
+			margin: 0 auto;
+		}
+		video {
+			display: block;
+			margin: 0 auto;
+		}
+		.center {
+		    margin-left: auto;
+		    margin-right: auto;
+		    display: block
+		}
+		.container {
+		  position: relative;
+		  text-align: center;
+		  color: white;
+		  width: 360px;
+		  display: block;
+		  margin: 0 auto;
+		}
+
+		/* Bottom left text */
+		.bottom-left {
+		  position: absolute;
+		  bottom: 10%;
+		  left: 10%;
+		}
+
+		/* Top left text */
+		.top-left {
+		  position: absolute;
+		  top: 10%;
+		  left: 10%;
+		}
+
+		/* Top right text */
+		.top-right {
+		  position: absolute;
+		  top: 10%;
+		  right: 10%;
+		}
+		
+		/* Bottom right text */
+		.bottom-right {
+		  position: absolute;
+		  bottom: 10%;
+		  right: 10%;
+		}
+
 	</style>
 </head>
 <body>
 <table style="width:100%">
-<tr>
-<th>
-<div id="headerl"><h3>Left Door</h3></div>
-</th>
-<th>
-<div id="headerr"><h3>Right Door</h3></div>
-</th>
-</tr>
 <tr>
 <td>
 <div id="openCloseButtonl" style="margin-left: auto; margin-right: auto; position:relative"></div>
@@ -335,34 +526,34 @@
 </tr>
 <tr>
 <td>
-<div id="contentl" style="margin-left: auto; margin-right: auto; position:relative"></div>
+<div id="lGarageButton" style="margin-left: auto; margin-right: auto; position:relative"></div>
 </td>
 <td>
-<div id="contentr" style="margin-left: auto; margin-right: auto; position:relative"></div>
-</td>
-</tr>
-<tr>
-<td>
-<div id="confirmTextl"><h3>Are you sure?</h3></div>
-</td>
-<td>
-<div id="confirmTextr"><h3>Are you sure?</h3></div>
+<div id="rGarageButton" style="margin-left: auto; margin-right: auto; position:relative"></div>
 </td>
 </tr>
 <tr>
 <td>
-<div id="yesl" style="margin-left: auto; margin-right: auto; position:relative" class="confirmButton">YES</div>
+<div id="confirmTextl" style="display:none"><h3>Are you sure?</h3></div>
 </td>
 <td>
-<div id="yesr" style="margin-left: auto; margin-right: auto; position:relative" class="confirmButton">YES</div>
+<div id="confirmTextr" style="display:none"><h3>Are you sure?</h3></div>
 </td>
 </tr>
 <tr>
 <td>
-<div id="nol" style="margin-left: auto; margin-right: auto; position:relative" class="confirmButton">NO</div>
+<div id="yesl" style="margin-left: auto; margin-right: auto; position:relative; display:none" class="confirmButton">YES</div>
 </td>
 <td>
-<div id="nor" style="margin-left: auto; margin-right: auto; position:relative" class="confirmButton">NO</div>
+<div id="yesr" style="margin-left: auto; margin-right: auto; position:relative; display:none" class="confirmButton">YES</div>
+</td>
+</tr>
+<tr>
+<td>
+<div id="nol" style="margin-left: auto; margin-right: auto; position:relative; display:none" class="confirmButton">NO</div>
+</td>
+<td>
+<div id="nor" style="margin-left: auto; margin-right: auto; position:relative; display:none" class="confirmButton">NO</div>
 </td>
 </tr>
 <tr>
@@ -373,7 +564,23 @@
 <div id="logr" style="margin-left: auto; margin-right: auto; position:relative" class="log"> </div>
 </td>
 </tr>
+<tr>
+<td>
+<div id="takepicture" style="margin-left: auto; margin-right: auto; position:relative"></div>
+</td>
+<td>
+<div id="refLog" style="margin-left: auto; margin-right: auto; position:relative"></div>
+</td>
+</tr>
 </table>
-
+<div id="pic_container" class="container" hidden>
+  <div id="picture_div"></div>
+  <div id="date" class="bottom-left" hidden>Date</div>
+  <div id="trash" class="bottom-right" onclick="del_picture()" hidden><i class='far fa-trash-alt'></i></div>
+  <div id="prev_pic" class="top-left" onclick="prev_picture()" hidden><b><<</b></div>
+  <div id="next_pic" class="top-right" onclick="next_picture()" hidden><b>>></b></div>
+  <div id="vidOn" hidden><input type="checkbox" id="videoOn" value="Bike"> Show video<br></div>
+</div>
+<div id="video_div" hidden></div>
 </body>
 </html>

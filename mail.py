@@ -26,10 +26,18 @@ def sendemail(from_addr, to_addr_list, cc_addr_list,
     problems = server.sendmail(from_addr, to_addr_list, text)
     server.quit()
 
-sendemail(from_addr    = 'GPI',
-          to_addr_list = '<your email address>',
-          cc_addr_list = '',
-          subject      = '',
-          message      = sys.argv[1],
-          login        = '<your email login>',
-          password     = '<your email password>')
+#sendemail(from_addr    = 'GPI',
+#          to_addr_list = '<bell number>@txt.bell.ca',
+#          cc_addr_list = '',
+#          subject      = '',
+#          message      = sys.argv[1],
+#          login        = '<gmail id>',
+#          password     = '<gmail pwd>')
+
+#sendemail(from_addr    = 'GPI',
+#          to_addr_list = '<rogers number>@sms.rogers.com',
+#          cc_addr_list = '',
+#          subject      = '',
+#          message      = sys.argv[1],
+#          login        = '<gmail id>',
+#          password     = '<gmail pwd>')
