@@ -71,13 +71,20 @@ What does install.sh do?
 ------------------------
 . Download webiopi
 . Download webiopi patch to work for newer pi like pi2 and above
-. Install webiopi
-. Install ffmpeg
+. Install webiopi. It will ask you if you want to access GPIO over the net. If yes, it will installed Weaved.
+. Install ffmpeg. It will ask you if you are ok to install.
 . Change attribute of /usr/share/webiopi/htdocs to be owned by pi instead of root
 . Change attribute of Garage pi code to be able and copy to /usr/share/webiopi/htdocs
 . Create po and vo folder for the picture and video history.
 . Copy new webiopi config to /etc/webiopi/config
 . Get webiopi to startup automatically on reboot
+. Note. It will take a long time to install all the different components.
+. During the install of ffmpeg, I got an error and had to run 'sudo apt-get update --fix-missing' to fix.
+
+
+
+To change default webiopi userid and password which is 'webiopi' for username and 'raspberry' for password. To change this userid and pwd issue this command
+sudo webiopi-passwd
 
 To reboot pi, issue this command
 sudo reboot
@@ -95,6 +102,15 @@ http://webiopi.trouch.com/
 
 If you want to use this over the internet look into remote.it https://remote.it/
 There are ios and android app as well.
+You need to create an account on remote.it.
+Then install the software using
+sudo apt install connectd
+To run issue this command
+sudo connectd_installer
+You probably want to configure an SSH and an HTTP service.
+
+To get mail notification you need to modify mail.py to enter the mail address and mail server
+
 
 Original code comes from https://www.driscocity.com/idiots-guide-to-a-raspberry-pi-garage-door-opener/
 

@@ -14,7 +14,7 @@ echo '**** Install WEBIOPI ****'
 cd ..
 echo $PWD
 echo '**** Install ffmpeg ****'
-apt-get install install ffmpeg
+apt-get install ffmpeg
 echo '**** Copy Garage Pi ****'
 `chown -R pi:pi /usr/share/webiopi`
 `chmod 775 *.py`
