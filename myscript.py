@@ -219,10 +219,10 @@ def r_log_read1():
 
 @webiopi.macro
 def takePic():
-	subprocess.call('systemctl stop motioneye',shell=True)
+    subprocess.call('systemctl stop motioneye',shell=True)
     subprocess.call('raspistill -w 320 -h 240 -mm matrix -vf -hf -o /usr/share/webiopi/htdocs/cam.jpg',shell=True)
     subprocess.call('raspivid -w 320 -h 240 -mm matrix -vf -hf -o /usr/share/webiopi/htdocs/vid.h264 -t 30000',shell=True)
-	subprocess.call('systemctl start motioneye',shell=True)
+    subprocess.call('systemctl start motioneye',shell=True)
     subprocess.call('ffmpeg -y -i /usr/share/webiopi/htdocs/vid.h264 -c copy /usr/share/webiopi/htdocs/vid.mp4',shell=True)
     now=datetime.datetime.now()
     cur_ts=now.strftime("%Y-%m-%d_%H:%M")
