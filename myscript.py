@@ -220,14 +220,16 @@ def r_log_read1():
 @webiopi.macro
 def takePic():
     subprocess.call('systemctl stop motioneye',shell=True)
-    subprocess.call('raspistill -w 320 -h 240 -mm matrix -vf -hf -o /usr/share/webiopi/htdocs/cam.jpg',shell=True)
-    subprocess.call('raspivid -w 320 -h 240 -mm matrix -vf -hf -o /usr/share/webiopi/htdocs/vid.h264 -t 30000',shell=True)
-    subprocess.call('systemctl start motioneye',shell=True)
-    subprocess.call('ffmpeg -y -i /usr/share/webiopi/htdocs/vid.h264 -c copy /usr/share/webiopi/htdocs/vid.mp4',shell=True)
     now=datetime.datetime.now()
     cur_ts=now.strftime("%Y-%m-%d_%H:%M")
+    subprocess.call('raspistill -w 320 -h 240 -mm matrix -vf -hf -o /usr/share/webiopi/htdocs/cam.jpg',shell=True)
     subprocess.call('cp /usr/share/webiopi/htdocs/cam.jpg /usr/share/webiopi/htdocs/po/p'+cur_ts+'.jpg',shell=True)
-    subprocess.call('cp /usr/share/webiopi/htdocs/vid.mp4 /usr/share/webiopi/htdocs/vo/v'+cur_ts+'.mp4',shell=True)
+    subprocess.call(path+'video.py '+cur_ts+' &',shell=True)
+    #subprocess.call('raspivid -w 320 -h 240 -mm matrix -vf -hf -o /usr/share/webiopi/htdocs/vid.h264 -t 30000',shell=True)
+    #subprocess.call('systemctl start motioneye',shell=True)
+    #subprocess.call('ffmpeg -y -i /usr/share/webiopi/htdocs/vid.h264 -c:v libvpx -cpu-used 5 -threads 8 /usr/share/webiopi/htdocs/vid.webm',shell=True)
+    #subprocess.call('cp /usr/share/webiopi/htdocs/cam.jpg /usr/share/webiopi/htdocs/po/p'+cur_ts+'.jpg',shell=True)
+    #subprocess.call('cp /usr/share/webiopi/htdocs/vid.webm /usr/share/webiopi/htdocs/vo/v'+cur_ts+'.webm',shell=True)
     return
 	
 @webiopi.macro

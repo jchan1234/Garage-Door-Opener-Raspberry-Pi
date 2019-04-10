@@ -60,8 +60,8 @@ myscript.py monitors the garage status and log open and close time to a file. Al
 l_logger.sh logs open and close time to l_garage.log. 
 r_logger.sh logs open and close time to r_garage.log
 mail.py sends email when door is left open too long.
-
-Those 3 scripts above are called by myscript.py
+video.py takes 30 sec video, convert to webm and copy to vo folder.
+Those 4 scripts above are called by myscript.py
 
 Change the attribute of install.sh and run it using sudo. Below are the commands
 chmod 775 install.sh
