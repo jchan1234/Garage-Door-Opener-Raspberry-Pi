@@ -218,14 +218,14 @@
 				var b=document.getElementById('pic_container');
 				b.hidden=false;
 				b=document.getElementById('prev_pic');
-				if (cur_pic==0) {
+				if (cur_pic == tot_pic) {
 					b.hidden=true;
 				}
 				else {
 					b.hidden=false;
 				}
 				b=document.getElementById('next_pic');
-				if (cur_pic == tot_pic) {
+				if (cur_pic == 0) {
 					b.hidden=true;
 				}
 				else {
@@ -295,7 +295,7 @@
 			}
 
 			function updatePic2(){
-			    cur_pic=tot_pic;
+			    cur_pic=0;
 				show_regular_pic();
 			}
 			
@@ -315,7 +315,7 @@
 			}
 			
 			function next_picture(){
-				cur_pic = cur_pic + 1;
+				cur_pic = cur_pic - 1;
 				if(pic_l[cur_pic]=='deleted') {
 				  show_deleted_pic()
 				}
@@ -325,7 +325,7 @@
 			}
 			
 			function prev_picture(){
-				cur_pic = cur_pic - 1;
+				cur_pic = cur_pic + 1;
 				if(pic_l[cur_pic]=='deleted') {
 				  show_deleted_pic()
 				}

@@ -109,7 +109,7 @@ To run issue this command
 sudo connectd_installer
 You probably want to configure an SSH and an HTTP service.
 
-To get mail notification you need to modify mail.py to enter the mail address and mail server
+To get mail notification you need to modify mail.py to enter the mail address and mail server. Read more about python and email here https://realpython.com/python-send-email/
 
 
 motioneye

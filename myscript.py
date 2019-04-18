@@ -236,7 +236,7 @@ def takePic():
 def pic_list():
 	os.chdir(po)
 	files = filter(os.path.isfile, os.listdir(po))
-	files = sorted(files)
+	files = sorted(files, reverse=True)
 	cnt=0
 	max=20
 	for file in files:
